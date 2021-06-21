@@ -1,5 +1,5 @@
 
-display("set numerics ...");
+println("set numerics ...");
 
 
 solver = SOLVER2D(
@@ -16,7 +16,7 @@ solControls = CONTROLS(
 	1, # fixed timeStepMethod (1 - adaptive)
 	0.0,  # actual physical time to start simulation
 	0.1,  # actual physical time to stop simulation 
-	0, # flag to plot residuals
+	1, # flag to plot residuals
 	0, # flag to constrain density
 	1.0, # minDensityConstrained::Float64;
 	1.0 # maxDensityConstrained::Float64;	
@@ -52,17 +52,17 @@ dynControls.localTestPath = testdir;
 output = outputCONTROLS(
 	50, #verbosity::Int8;  
 	"Time[s]\t Tau[s]\t Resid1\t Resid2\t Resid3\t Resid4\t CPUtime [s]", 
-	1, #saveResiduals::Int8;
-	1, #saveResults::Int8; 
+	0, #saveResiduals::Int8;
+	0, #saveResults::Int8; 
 	"residuals.dat",#fileNameResults::String;
-	"solution.dat" #fileNameResiduals::String;
+	"solution.dat", #fileNameResiduals::String;
+	1, ## save data to VTK
+	"zzz"
 );
 
 
 flowTime = solControls.startTime;
 
-println("Start calculations ...");
-println(output.header);
 
 
 

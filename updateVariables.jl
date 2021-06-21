@@ -1,34 +1,39 @@
-#display("done ...");
+
+## DEPRICATED!!!
+
+# #display("done ...");
 
 
-if (nprocs() == 1) #serial 
+# if (nprocs() == 1) #serial 
 
 	
-	Delta =  deepcopy(UconsCellsNew - UconsCellsOld); 
-	UphysCells = deepcopy(cns2dphs2d(UconsCellsNew,testMesh.nCells,thermo.Gamma));
-	#UphysNodes = deepcopy( cells2nodesSolutionReconstructionWithStencilsM(nCells, nNodes, nNeibCells, UphysCells , cell_clusters, node_stencils)); 
-	UphysNodes = deepcopy( cells2nodesSolutionReconstructionWithStencils(testMesh, UphysCells )  ); 
- 
-	#Delta =  UconsCellsNew - UconsCellsOld; 
-	#UphysCells = cns2dphs2d(UconsCellsNew,thermo.Gamma);
-	#UphysNodes = cells2nodesSolutionReconstructionWithStencilsM(nCells, nNodes, nNeibCells, UphysCells , cell_clusters, node_stencils); 
-
-	for i=1:testMesh.nCells
-    	aSoundCell[i] = sqrt( thermo.Gamma * UphysCells[i,4]/UphysCells[i,1] );
-      	VMAXCell[i]  = sqrt( UphysCells[i,2]*UphysCells[i,2] + UphysCells[i,3]*UphysCells[i,3] ) + aSoundCell[i];
-      	densityCell[i] = UphysCells[i,1];
-		entropyCell[i] = UphysCells[i,1]/(thermo.Gamma-1.0)*log(UphysCells[i,4]/UphysCells[i,1]*thermo.Gamma);
-	end
+	# Delta =  deepcopy(UconsCellsNew - UconsCellsOld); 
+	# #UphysCells = deepcopy(cns2dphs2d(UconsCellsNew,testMesh.nCells,thermo.Gamma));
+	
+	# #display(UconsCellsNew)
+	
+	# for i=1:testMesh.nCells
 
 
-	#densityNodes = cells2nodesSolutionReconstructionWithStencilsV(nCells, nNodes, nNeibCells, density , cell_clusters, node_stencils); 
-	densityNodes = cells2nodesSolutionReconstructionWithStencils(testMesh, densityCell); 
+	
+		# testfields2d.densityCells[i] = UconsCellsNew[i,1];
+		# testfields2d.UxCells[i] 	 = UconsCellsNew[i,2]/UconsCellsNew[i,1];
+		# testfields2d.UyCells[i] 	 = UconsCellsNew[i,3]/UconsCellsNew[i,1];
+		# testfields2d.pressureCells[i] = (thermo.Gamma-1.0)*( UconsCellsNew[i,4] - 0.5*( UconsCellsNew[i,2]*UconsCellsNew[i,2] + UconsCellsNew[i,3]*UconsCellsNew[i,3] )/UconsCellsNew[i,1] );
 
-	(dynControls.rhoMax,id) = findmax(densityCell);
-	(dynControls.rhoMin,id) = findmin(densityCell);
+		
+		# testfields2d.aSoundCells[i] = sqrt( thermo.Gamma * testfields2d.pressureCells[i]/testfields2d.densityCells[i] );
+		# testfields2d.VMAXCells[i]  = sqrt( testfields2d.UxCells[i]*testfields2d.UxCells[i] + testfields2d.UyCells[i]*testfields2d.UyCells[i] ) + testfields2d.aSoundCells[i];
+		
+	# end
+	
+	# cells2nodesSolutionReconstructionWithStencilsImplicit!(testMesh, testfields2d); 
+	
+	# (dynControls.rhoMax,id) = findmax(testfields2d.densityCells);
+	# (dynControls.rhoMin,id) = findmin(testfields2d.densityCells);
 
-	UconsCellsOld =  deepcopy(UconsCellsNew);
-else
+	# UconsCellsOld =  deepcopy(UconsCellsNew);
+# else
 
 	
 

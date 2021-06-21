@@ -1,11 +1,16 @@
 
 
+# DEPRICATED!!!!
 
-(dynControls.velmax,id) = findmax(VMAXCell);
-dynControls.tau = solControls.CFL * testMesh.maxArea/(max(dynControls.velmax,1.0e-6));
+# (dynControls.velmax,id) = findmax(VMAXCell);
+
+# #dynControls.tau = solControls.CFL * testMesh.maxEdgeLength/(max(dynControls.velmax,1.0e-6));
+# dynControls.tau = solControls.CFL * testMesh.maxArea/(max(dynControls.velmax,1.0e-6));
 
 
-UconsCellsNew = deepcopy(FirstOrderUpwindM1(1.0,UconsCellsOld, UphysCells ));
+# #UconsCellsNew = deepcopy(FirstOrderUpwindM1(1.0,UconsCellsOld, UphysCells ));
+# UconsCellsNew = deepcopy(FirstOrderUpwindM2(1.0,UconsCellsOld, testfields2d));
+
 
 # if (solver.TimeDiscretization == 2) # 4th RK 
 
