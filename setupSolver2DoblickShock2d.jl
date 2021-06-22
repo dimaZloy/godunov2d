@@ -16,7 +16,7 @@ solControls = CONTROLS(
 	1, # fixed timeStepMethod (1 - adaptive)
 	0.0,  # actual physical time to start simulation
 	0.1,  # actual physical time to stop simulation 
-	1, # flag to plot residuals
+	0, # flag to plot residuals
 	0, # flag to constrain density
 	1.0, # minDensityConstrained::Float64;
 	1.0 # maxDensityConstrained::Float64;	
@@ -24,9 +24,9 @@ solControls = CONTROLS(
 
 pControls = plotCONTROLS(
 	1, # 1 - filled contours , 0 - contour lines only
-	20, # number of contours to plot 
-	1.1, #min density
-	2.7, #max density 
+	10, # number of contours to plot 
+	1.0, #min density
+	2.8, #max density 
 	0 # flag to production video 
 	);
 
@@ -46,17 +46,17 @@ dynControls = DYNAMICCONTROLS(
 );
 
 dynControls.globalPath = pwd();
-dynControls.localTestPath = testdir;
+#dynControls.localTestPath = testdir;
 
 
 output = outputCONTROLS(
-	50, #verbosity::Int8;  
+	0, #verbosity::Int8;  
 	"Time[s]\t Tau[s]\t Resid1\t Resid2\t Resid3\t Resid4\t CPUtime [s]", 
 	0, #saveResiduals::Int8;
 	0, #saveResults::Int8; 
 	"residuals.dat",#fileNameResults::String;
 	"solution.dat", #fileNameResiduals::String;
-	1, ## save data to VTK
+	0, ## save data to VTK
 	"zzz"
 );
 

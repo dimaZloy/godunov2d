@@ -50,24 +50,17 @@ function createFields2d(testMesh::mesh2d, thermo::THERMOPHYSICS)
 				
 	end
 
-	#densityNodes, UxNodes, UyNodes, pressureNodes = cells2nodesSolutionReconstructionWithStencils(testMesh, densityCells, UxCells, UyCells, pressureCells); 
-	#densityNodes = UphysNodes[:,1]; 
 	
-	densityF = cells2nodesSolutionReconstructionWithStencils(testMesh, densityCells )
+	densityF = cells2nodesSolutionReconstructionWithStencils(testMesh, densityCells); 
+
 		
 	if (output.saveDataToVTK == 1)	
 		filename = string("zzz",dynControls.curIter+1000);
 		saveResults2VTK(filename, testMesh, densityF, "density");
+		
 	end
 
 		
-	#UconsCellsOld = phs2dcns2d(densityCells, UxCells, UyCells, pressureCells, thermo.Gamma); #old vector
-	#UconsCellsNew = deepcopy(UconsCellsOld); #new  vector 
-
-	#UconsDelta = deepcopy(UconsCellsOld); #delta - residual vector
-	#UconsCellsN1 = deepcopy(UconsCellsOld); #RK4 i-stage
-	#UconsCellsN2 = deepcopy(UconsCellsOld); #RK4 i-stage
-	#UconsCellsN3 = deepcopy(UconsCellsOld); #RK4 i-stage
 
 
 	# create fields 
@@ -194,14 +187,13 @@ function updateOutput!(
 		println(out); 
 		println(densityWarn);
 		
-		densityF = cells2nodesSolutionReconstructionWithStencils(testMesh, testFields.densityCells )
-		#densityF =   testFields.densityNodes; 
+		#densityF = cells2nodesSolutionReconstructionWithStencils(testMesh,  testFields.densityCells  )
 		
 		if (output.saveDataToVTK == 1)
 			filename = string("zzz",dynControls.curIter+1000); 
 			
 			
-			saveResults2VTK(filename, testMesh, densityF, "density");
+			saveResults2VTK(filename, testMesh, testFields.densityNodes, "density");
 			
 		end
 		 
@@ -216,7 +208,9 @@ function updateOutput!(
 			
 			cla();
 			
-			tricontourf(testMesh.xNodes,testMesh.yNodes,densityF,pControls.nContours,vmin=pControls.rhoMINcont,vmax=pControls.rhoMAXcont);
+			
+			tricontourf(testMesh.xNodes,testMesh.yNodes, testFields.densityNodes,pControls.nContours,vmin=pControls.rhoMINcont,vmax=pControls.rhoMAXcont);
+			#tricontour(testMesh.xNodes,testMesh.yNodes, testFields.densityNodes,pControls.nContours,vmin=pControls.rhoMINcont,vmax=pControls.rhoMAXcont);
 			
 			set_cmap("jet");
 			xlabel("x");
