@@ -51,12 +51,15 @@ function createFields2d(testMesh::mesh2d, thermo::THERMOPHYSICS)
 	end
 
 	
-	densityF = cells2nodesSolutionReconstructionWithStencils(testMesh, densityCells); 
-
+	
+	densityNodes = cells2nodesSolutionReconstructionWithStencils(testMesh, densityCells); 
+	UxNodes = cells2nodesSolutionReconstructionWithStencils(testMesh, UxCells); 
+	UyNodes = cells2nodesSolutionReconstructionWithStencils(testMesh, UyCells); 
+	pressureNodes = cells2nodesSolutionReconstructionWithStencils(testMesh, pressureCells); 
 		
 	if (output.saveDataToVTK == 1)	
 		filename = string("zzz",dynControls.curIter+1000);
-		saveResults2VTK(filename, testMesh, densityF, "density");
+		saveResults2VTK(filename, testMesh, densityNodes, "density");
 		
 	end
 
@@ -129,13 +132,21 @@ function updateResidual!(
 end
 
 
-function updateVariables!(
+function updateVariablesM2(
+	Delta::Array{Float64,2},
+	UconsCellsOld::Array{Float64,2},
 	UconsCellsNew::Array{Float64,2},
 	testMesh::mesh2d,
 	testfields2d::fields2d,
 	dynControls::DYNAMICCONTROLS)
 	
 	for i=1:testMesh.nCells
+	
+	
+		Delta[i,1] = UconsCellsNew[i,1] - UconsCellsOld[i,1];
+		Delta[i,2] = UconsCellsNew[i,2] - UconsCellsOld[i,2];
+		Delta[i,3] = UconsCellsNew[i,3] - UconsCellsOld[i,3];
+		Delta[i,4] = UconsCellsNew[i,4] - UconsCellsOld[i,4];
 	
 		testfields2d.densityCells[i] = UconsCellsNew[i,1];
 		testfields2d.UxCells[i] 	 = UconsCellsNew[i,2]/UconsCellsNew[i,1];
@@ -144,6 +155,11 @@ function updateVariables!(
 
 		testfields2d.aSoundCells[i] = sqrt( thermo.Gamma * testfields2d.pressureCells[i]/testfields2d.densityCells[i] );
 		testfields2d.VMAXCells[i]  = sqrt( testfields2d.UxCells[i]*testfields2d.UxCells[i] + testfields2d.UyCells[i]*testfields2d.UyCells[i] ) + testfields2d.aSoundCells[i];
+			
+		UconsCellsOld[i,1] = UconsCellsNew[i,1];
+		UconsCellsOld[i,2] = UconsCellsNew[i,2];
+		UconsCellsOld[i,3] = UconsCellsNew[i,3];
+		UconsCellsOld[i,4] = UconsCellsNew[i,4];
 		
 	end
 	
@@ -151,10 +167,34 @@ function updateVariables!(
 	
 	(dynControls.rhoMax,id) = findmax(testfields2d.densityCells);
 	(dynControls.rhoMin,id) = findmin(testfields2d.densityCells);
-
-	
 	
 end
+
+# DEPRICATED!!!
+# function updateVariables!(
+	# UconsCellsNew::Array{Float64,2},
+	# testMesh::mesh2d,
+	# testfields2d::fields2d,
+	# dynControls::DYNAMICCONTROLS)
+	
+	# for i=1:testMesh.nCells
+	
+		# testfields2d.densityCells[i] = UconsCellsNew[i,1];
+		# testfields2d.UxCells[i] 	 = UconsCellsNew[i,2]/UconsCellsNew[i,1];
+		# testfields2d.UyCells[i] 	 = UconsCellsNew[i,3]/UconsCellsNew[i,1];
+		# testfields2d.pressureCells[i] = (thermo.Gamma-1.0)*( UconsCellsNew[i,4] - 0.5*( UconsCellsNew[i,2]*UconsCellsNew[i,2] + UconsCellsNew[i,3]*UconsCellsNew[i,3] )/UconsCellsNew[i,1] );
+
+		# testfields2d.aSoundCells[i] = sqrt( thermo.Gamma * testfields2d.pressureCells[i]/testfields2d.densityCells[i] );
+		# testfields2d.VMAXCells[i]  = sqrt( testfields2d.UxCells[i]*testfields2d.UxCells[i] + testfields2d.UyCells[i]*testfields2d.UyCells[i] ) + testfields2d.aSoundCells[i];
+		
+	# end
+	
+	# cells2nodesSolutionReconstructionWithStencilsImplicit!(testMesh, testfields2d); 
+	
+	# (dynControls.rhoMax,id) = findmax(testfields2d.densityCells);
+	# (dynControls.rhoMin,id) = findmin(testfields2d.densityCells);
+	
+# end
 
 function updateOutput!(
 	timeVector::Array{Any,1},

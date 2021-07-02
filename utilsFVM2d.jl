@@ -52,7 +52,7 @@ end
 
 	
 
-@everywhere function ComputeUPhysFromBoundaries(i,k,neib_cell, cur_cell, nx,ny)
+@everywhere function ComputeUPhysFromBoundaries(i::Int64,k::Int64,neib_cell::Int64, cur_cell::Array{Float64,1}, nx::Float64,ny::Float64)::Array{Float64,1}
 
 	#global TEST;	
 	bnd_cell = zeros(Float64,4);
@@ -71,13 +71,18 @@ end
 		
 		elseif (neib_cell == -2) #right 
 
-			bnd_cell = cur_cell;	
+			bnd_cell = deepcopy(cur_cell);	
+			# bnd_cell[1] = cur_cell[1];
+			# bnd_cell[2] = cur_cell[2];
+			# bnd_cell[3] = cur_cell[3];
+			# bnd_cell[4] = cur_cell[4];
 			
 
 		elseif (neib_cell == -3) #bottom 
 
-	 	   	#bnd_cell = cur_cell;	
-	        #bnd_cell = updateVelocityFromCurvWall(i,k,bnd_cell,nx,ny);
+	 	   	#bnd_cell = deepcopy(cur_cell);	
+			#bnd_cell[3] = -bnd_cell[3];
+	      
 			bnd_cell = updateVelocityFromCurvWall(i,k,cur_cell,nx,ny);
 
         
@@ -94,10 +99,11 @@ end
 			
 
 	return bnd_cell; 
+	
 end
 
 
-@everywhere function updateVelocityFromCurvWall(i::Int64, k::Int64, U, nx::Float64, ny::Float64)
+@everywhere function updateVelocityFromCurvWall(i::Int64, k::Int64, U::Array{Float64,1}, nx::Float64, ny::Float64)::Array{Float64,1}
 
 # High-Order Accurate Implementation of Solid Wall Boundary Conditions in Curved Geometries, 
 # Lilia Krivodonova and Marsha Berger, Courant Institute of Mathematical Sciences, New York, NY 10012
@@ -108,12 +114,13 @@ end
 # U[1] = a;
 # U[2] = b;
 
-	Un = U; 
+	Un = deepcopy(U); 
+	#Un = (U); 
 
-        Un[2] = U[2]*(ny*ny - nx*nx) - 2.0*nx*ny*U[3];
-        Un[3] = U[3]*(nx*nx - ny*ny) - 2.0*nx*ny*U[2];
-
-
+    Un[2] = U[2]*(ny*ny - nx*nx) - 2.0*nx*ny*U[3];
+    Un[3] = U[3]*(nx*nx - ny*ny) - 2.0*nx*ny*U[2];    
+		
+	
 	return Un;	
 end
 
@@ -142,7 +149,10 @@ end
 			end
 		end
 		if (det!=0)
-			node_solution[J,:] = node_solution[J,:]/det; 
+			node_solution[J,1] = node_solution[J,1]/det; 
+			node_solution[J,2] = node_solution[J,2]/det; 
+			node_solution[J,3] = node_solution[J,3]/det; 
+			node_solution[J,4] = node_solution[J,4]/det; 
 			
 		end
 	end
@@ -339,3 +349,5 @@ UconsCells = zeros(Float64,	testMesh.nCells, 4);# new cons varaibles
 	return UconsCells;
 
 end
+
+

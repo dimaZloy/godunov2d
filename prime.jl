@@ -14,13 +14,15 @@ using BSON: @save
 include("D:/Julia/JuliaProjects/aero2d/mesh2d/primeObjects.jl");
 include("thermo.jl"); #setup thermodynamics
 include("utilsIO.jl");
+include("limiters.jl");
 include("RoeFlux2d.jl")
 include("AUSMflux2d.jl"); #AUSM+ inviscid flux calculation 
 include("utilsFVM2d.jl"); #FVM utililities
-include("RIEMANN1d.jl")
 
-
+include("computeslope2d.jl")
+include("SOUscheme.jl")
 include("createFields2d.jl");
+
 
 ## TODO: 
 ## check:  how to usemaxArea or maxEdgeLength
@@ -32,7 +34,7 @@ include("createFields2d.jl");
 
 
 
-function godunov2d(pname::String)
+function godunov2d(pname::String, approx::String, outputfile::String)
 
 	
 	#@load "testTriMesh2d.bson" testMesh
@@ -43,6 +45,10 @@ function godunov2d(pname::String)
 
 	include("setupSolver2DoblickShock2d.jl"); #setup FVM and numerical schemes
 	
+		
+	# display(testMesh.node2cellsL2up)
+	# display(testMesh.node2cellsL2down)
+
 	
 	timeVector = [];
 	residualsVector1 = []; 
@@ -58,8 +64,8 @@ function godunov2d(pname::String)
 	println("set initial and boundary conditions ...");
 	testfields2d = createFields2d(testMesh, thermo);
 	
-	debug = true;
-	if (debug)
+	# debug = true;
+	# if (debug)
 	
 		## init conservative variables 
 		UconsCellsOld = zeros(Float64,testMesh.nCells,4);
@@ -67,7 +73,22 @@ function godunov2d(pname::String)
 		Delta = zeros(Float64,testMesh.nCells,4);
 
 		UconsCellsOld = phs2dcns2dcells(testfields2d, thermo.Gamma); #old vector
-		UconsCellsNew = deepcopy(UconsCellsOld); #new  vector 
+		UconsCellsNew = phs2dcns2dcells(testfields2d, thermo.Gamma); #new vector
+		
+		
+		# UconsCellsN1 = deepcopy(UconsCellsOld); #new  vector 
+		# UconsCellsN2 = deepcopy(UconsCellsOld); #new  vector 
+		# UconsCellsN3 = deepcopy(UconsCellsOld); #new  vector 
+		
+		
+		
+		(zzz2,id) = findmin(testMesh.cell_edges_length[:,1]);
+		(zzz3,id) = findmin(testMesh.cell_edges_length[:,2]);
+		(zzz4,id) = findmin(testMesh.cell_edges_length[:,3]);
+		(zzz5,id) = findmin(testMesh.cell_edges_length[:,4]);
+		
+		DX::Float64 = 0.25*sqrt(zzz2*zzz2 + zzz3*zzz3 + zzz4*zzz4 + zzz5*zzz5);
+				
 		
 		println("Start calculations ...");
 		println(output.header);
@@ -78,30 +99,40 @@ function godunov2d(pname::String)
 			
 			# PROPAGATE STAGE: 
 			(dynControls.velmax,id) = findmax(testfields2d.VMAXCells);
-			#dynControls.tau = solControls.CFL * testMesh.maxEdgeLength/(max(dynControls.velmax,1.0e-6)); !!!!
-			dynControls.tau = solControls.CFL * testMesh.maxArea/(max(dynControls.velmax,1.0e-6));
+			#dynControls.tau = 0.5*solControls.CFL * testMesh.maxArea/(max(dynControls.velmax,1.0e-6));
+			dynControls.tau =  solControls.CFL * DX/(max(dynControls.velmax,1.0e-6));
 			
+						
+			dt::Float64 = 0.0;
+			if (solControls.timeStepMethod == 1)
+				dt  = dynControls.tau;  
+			else
+				dt =  solControls.dt;  
+			end
 			
-			#UconsCellsNew = deepcopy(FirstOrderUpwindM2(1.0, UconsCellsOld, testfields2d ));
-			UconsCellsNew = deepcopy(FirstOrderUpwindM2(1.0, UconsCellsOld, testMesh, testfields2d, thermo, solControls, dynControls ));
+			#SecondOrderUpwindM2(1.0, UconsCellsOld, node2cellL2up, node2cellL2down, testMesh, testfields2d, thermo, solControls, dynControls, UconsCellsNew );
+			SecondOrderUpwindM2(1.0, dt,  UconsCellsOld, testMesh, testfields2d, thermo, UconsCellsNew );
 			
+			# rk21  = 1.0;
+			# rk22  = 0.5;
+
+			# UconsCellsN1 = deepcopy(SecondOrderUpwindM2(rk21, UconsCellsOld, node2cellL2up, node2cellL2down, testMesh, testfields2d, thermo, solControls, dynControls ));
+			# UconsCellsN2 = deepcopy(UconsCellsOld.*rk22 .+ UconsCellsN1.*rk22);
+			# UconsCellsNew = deepcopy(SecondOrderUpwindM2(rk22, UconsCellsN2, node2cellL2up, node2cellL2down, testMesh, testfields2d, thermo, solControls, dynControls )); 	
+		
+		
 		
 			# EVALUATE STAGE:
-			if (solControls.timeStepMethod == 1)
-				dynControls.flowTime += dynControls.tau;  
-			else
-				dynControls.flowTime += solControls.dt;  
-			end
+			
+			dynControls.flowTime += dt; 
 			
 			push!(timeVector, dynControls.flowTime); 
 			dynControls.curIter += 1; 
 			dynControls.verIter += 1;
-
 			
-			Delta =  deepcopy(UconsCellsNew - UconsCellsOld); 
-			UconsCellsOld =  deepcopy(UconsCellsNew);	
-			
-			updateVariables!(UconsCellsOld, testMesh, testfields2d, dynControls);
+			updateVariablesM2(Delta, UconsCellsOld, UconsCellsNew,  testMesh, testfields2d, dynControls);
+			#updateVariables!(UconsCellsOld, testMesh, testfields2d, dynControls);
+						
 			
 			updateResidual!(Delta, 
 				residualsVector1,residualsVector2,residualsVector3,residualsVector4, residualsVectorMax,  
@@ -142,15 +173,25 @@ function godunov2d(pname::String)
 			end
 			
 		end ## end while
+		
+		
+		
+		println("Saving  solution to  ", outputfile);
+		saveResults2VTK(outputfile, testMesh, testfields2d.densityNodes, "density");
+		println("done ...  ");	
 		 
-	end ## end debug
+	#end ## end debug
 	
 end
 
 
-@time godunov2d("testTriMesh2d.bson"); 
-@time godunov2d("testQuadMesh2d.bson"); 
-@time godunov2d("testMixedMesh2d.bson"); 
+# @time godunov2d("testTriMesh2d.bson","first","fouTri"); 
+# @time godunov2d("testQuadMesh2d.bson","first","fouQuad"); 
+# @time godunov2d("testMixedMesh2d.bson","first","fouMixed"); 
+
+@time godunov2d("testTriMesh2d.bson","second","souTri"); 
+#@time godunov2d("testQuadMesh2d.bson","second","souQuad"); 
+#@time godunov2d("testMixedMesh2d.bson","second","souMixed"); 
 
 
 
