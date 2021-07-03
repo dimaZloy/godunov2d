@@ -1,4 +1,18 @@
 
+function saveResults2VTKv(
+		filename::String, 
+		testMesh::mesh2d, 
+		testFields::fields2d)
+
+	vtkfile = vtk_grid(filename, testMesh.xNodes, testMesh.yNodes, testMesh.VTKCells);
+	vtk_point_data(vtkfile, testFields.densityNodes, "density");
+	vtk_point_data(vtkfile, testFields.UxNodes, "Ux");
+	vtk_point_data(vtkfile, testFields.UyNodes, "Uy");
+	vtk_point_data(vtkfile, testFields.pressureNodes, "pressure");
+	outfiles = vtk_save(vtkfile);
+	
+end
+
 
 function createFields2d(testMesh::mesh2d, thermo::THERMOPHYSICS)
 
@@ -237,7 +251,18 @@ function updateOutput!(
 			
 		end
 		 
-
+		thetaRad::Float64 = 61.0*pi/180.0;
+		SL::Float64 = tan(thetaRad)*1.0;
+		
+		exactSolutionX = [
+		0.0
+		SL
+		4.1];
+		exactSolutionY = [
+		1.0
+		0.0
+		1.0
+		];
 		
 	
 		if (solControls.plotResidual == 1)	
@@ -251,6 +276,8 @@ function updateOutput!(
 			
 			tricontourf(testMesh.xNodes,testMesh.yNodes, testFields.densityNodes,pControls.nContours,vmin=pControls.rhoMINcont,vmax=pControls.rhoMAXcont);
 			#tricontour(testMesh.xNodes,testMesh.yNodes, testFields.densityNodes,pControls.nContours,vmin=pControls.rhoMINcont,vmax=pControls.rhoMAXcont);
+			
+			plot(exactSolutionX,exactSolutionY,"--k",linewidth = 1.5);
 			
 			set_cmap("jet");
 			xlabel("x");

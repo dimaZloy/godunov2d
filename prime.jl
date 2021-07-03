@@ -11,7 +11,7 @@ using BSON: @load
 using BSON: @save
 
 
-include("D:/Julia/JuliaProjects/aero2d/mesh2d/primeObjects.jl");
+include("primeObjects.jl");
 include("thermo.jl"); #setup thermodynamics
 include("utilsIO.jl");
 include("limiters.jl");
@@ -20,6 +20,7 @@ include("AUSMflux2d.jl"); #AUSM+ inviscid flux calculation
 include("utilsFVM2d.jl"); #FVM utililities
 
 include("computeslope2d.jl")
+include("FOUscheme.jl")
 include("SOUscheme.jl")
 include("createFields2d.jl");
 
@@ -110,8 +111,11 @@ function godunov2d(pname::String, approx::String, outputfile::String)
 				dt =  solControls.dt;  
 			end
 			
-			#SecondOrderUpwindM2(1.0, UconsCellsOld, node2cellL2up, node2cellL2down, testMesh, testfields2d, thermo, solControls, dynControls, UconsCellsNew );
-			SecondOrderUpwindM2(1.0, dt,  UconsCellsOld, testMesh, testfields2d, thermo, UconsCellsNew );
+			if (approx == "first")
+				FirstOrderUpwindM2(1.0, dt,  UconsCellsOld, testMesh, testfields2d, thermo, UconsCellsNew );
+			else
+				SecondOrderUpwindM2(1.0, dt,  UconsCellsOld, testMesh, testfields2d, thermo, UconsCellsNew );
+			end
 			
 			# rk21  = 1.0;
 			# rk22  = 0.5;
@@ -177,7 +181,7 @@ function godunov2d(pname::String, approx::String, outputfile::String)
 		
 		
 		println("Saving  solution to  ", outputfile);
-		saveResults2VTK(outputfile, testMesh, testfields2d.densityNodes, "density");
+		saveResults2VTKv(outputfile, testMesh, testfields2d);
 		println("done ...  ");	
 		 
 	#end ## end debug
@@ -185,13 +189,11 @@ function godunov2d(pname::String, approx::String, outputfile::String)
 end
 
 
-# @time godunov2d("testTriMesh2d.bson","first","fouTri"); 
-# @time godunov2d("testQuadMesh2d.bson","first","fouQuad"); 
-# @time godunov2d("testMixedMesh2d.bson","first","fouMixed"); 
+#@time godunov2d("testTriMesh2d.bson","first","fouTri"); 
+#@time godunov2d("testTriMesh2d.bson","second","souTri"); 
 
-@time godunov2d("testTriMesh2d.bson","second","souTri"); 
-#@time godunov2d("testQuadMesh2d.bson","second","souQuad"); 
-#@time godunov2d("testMixedMesh2d.bson","second","souMixed"); 
+@time godunov2d("testQuadMesh2d.bson","second","souQuad"); 
+@time godunov2d("testMixedMesh2d.bson","second","souMixed"); 
 
 
 
